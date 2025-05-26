@@ -42,6 +42,91 @@ video-backend/
 └── .env                 # Environment variables
 ```
 ---
+## 🔄 MongoDB Aggregation Pipeline Usage
+This backend makes extensive use of **MongoDB Aggregation Pipelines** to optimize data processing at the database level. Common usage includes:
+
+- **Trending Videos:**
+```js
+Video.aggregate([
+    { $lookup: { from: 'likes', localField: '_id', foreignField: 'video', as: 'likes' }},
+    { $addFields: { likeCount: { $size: '$likes' }}},
+    { $sort: { likeCount: -1 }}
+  ])
+```
+- **📰 Subscription Feed**
+  ```js
+  User.aggregate([
+  { $match: { _id: userId }},
+  { $lookup: {
+      from: 'videos',
+      localField: 'subscribedTo',
+      foreignField: 'owner',
+      as: 'feedVideos'
+  }},
+  { $unwind: '$feedVideos' },
+  { $sort: { 'feedVideos.createdAt': -1 }}
+  ])
+
+  ```
+  - more...
+  ---
+## 🔐 Access Token & Refresh Token Authentication
+
+This project uses **Access Tokens** and **Refresh Tokens** to manage secure and scalable user authentication.
+
+### 🪪 Access Token
+- Short-lived JWT (e.g., expires in 15 minutes).
+- Sent via `Authorization: Bearer <token>` in headers for each protected API request.
+- Used for verifying the user during actions like uploading a video, liking, commenting, etc.
+
+### 🔄 Refresh Token
+- Long-lived JWT (e.g., expires in 7 days).
+- Stored securely in **HTTP-only cookies**.
+- Sent to a dedicated refresh endpoint (e.g., `/api/v1/user/refresh-token`) to obtain a new access token once it expires.
+- Automatically handled via cookies on the frontend.
+
+### Token Flow:
+
+1. **Login/Register**
+   - Backend generates both `accessToken` and `refreshToken`.
+   - `accessToken` is sent in the response body.
+   - `refreshToken` is sent in an `HttpOnly` cookie.
+
+2. **Authenticated Request**
+   - Frontend includes `accessToken` in the `Authorization` header.
+
+3. **Token Expiry**
+   - If `accessToken` expires, the frontend automatically calls the refresh route.
+   - Backend validates the `refreshToken` and returns a new `accessToken`.
+
+4. **Logout**
+   - Clears the `refreshToken` cookie on the client.
+
+---
+
+## 🆚 How This Project Stands Out
+
+Unlike many beginner backend projects (e.g., simple to-do apps or blogs), this project simulates a **real-world content platform**, offering:
+
+- **🎛️ Multi-feature design:**  
+  Combines user authentication, media uploads, social interactions, playlists, and tweet-like messaging — all in one codebase.
+
+- **📦 Modular architecture:**  
+  Routes, controllers, models, and middlewares are cleanly separated, following industry best practices and keeping the codebase maintainable.
+
+- **🔐 Advanced JWT token handling:**  
+  Implements secure `accessToken` + `refreshToken` strategy with `HttpOnly` cookie storage to protect users from XSS attacks and improve token lifecycle management.
+
+- **⚙️ MongoDB Aggregation Pipelines:**  
+  Uses powerful MongoDB pipelines to perform complex data transformations and calculations directly in the database for better performance and scalability.
+
+- **🔄 Practical use cases:**  
+  Mimics YouTube/Twitter-like features that are highly relevant for modern web application developers and full-stack projects.
+
+- **🚀 Scalability-ready:**  
+  The structure supports easy integration with cloud storage (e.g., AWS S3), CDN for video streaming, and future expansion like real-time notifications or chat features.
+
+---
 
 ## 📦 Installation
 
